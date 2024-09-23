@@ -1,26 +1,35 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <AdoptionDashboard/>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
+import AdoptionDashboard from "@/pages/AdoptionDashboard.vue";
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    AdoptionDashboard
   }
 }
 </script>
 
 <style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background: #F3F3F3;
+}
+
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
 }
 </style>
