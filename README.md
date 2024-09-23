@@ -1,24 +1,26 @@
 # adoption-dashboard
 
-## Project setup
+Hello! This is adoption dashboard for BeWell web app.
+
+## Getting Started
+
+### 1. Clone the Repository
+First, clone the repository to your local machine:
+
 ```
-npm install
+git clone https://github.com/LidiiaMorozova/adoption-dashboard.git
+cd adoption-dashboard
 ```
 
-### Compiles and hot-reloads for development
+### 2. Install dependencies
+
+```
+npm install
+# or
+yarn install
+```
+
+### 2. Run the Development Server
 ```
 npm run serve
 ```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
