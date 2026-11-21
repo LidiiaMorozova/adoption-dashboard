@@ -1,117 +1,88 @@
-<script setup>
-import {defineProps, computed} from 'vue';
+<script setup lang="ts">
+import {computed} from 'vue';
+import * as d3 from 'd3';
+import BaseCard from './common/BaseCard.vue';
 import CardHeader from './common/CardHeader.vue';
-import * as d3 from "d3";
-import {ArrowTrendingDownIcon, ArrowTrendingUpIcon} from "@heroicons/vue/24/outline";
+import TrendBadge from './common/TrendBadge.vue';
+import type {SmallCard} from '@/types/dashboard';
 
-const props = defineProps({
-  title: String,
-  value: Number,
-  trend: String,
-  percentage: String,
-  backgroundColor: String,
-  color: {
-    type: String,
-    default: 'blue'
-  },
-  icon: Object,
-  points: {
-    type: Array,
-    default: () => []
-  }
-});
+const props = defineProps<SmallCard>();
 
-const formattedValue = computed(() => {
-  return props.value.toLocaleString();
+const CHART_WIDTH = 100;
+const CHART_HEIGHT = 30;
+const STROKE_PADDING = 2;
+
+const formattedValue = computed(() => props.value.toLocaleString());
+
+const scales = computed(() => {
+  const [min = 0, max = 0] = d3.extent(props.points);
+  return {
+    x: d3.scaleLinear()
+        .domain([0, Math.max(props.points.length - 1, 1)])
+        .range([0, CHART_WIDTH]),
+    // Larger values are drawn higher; a constant series sits in the middle.
+    y: d3.scaleLinear()
+        .domain(min === max ? [min - 1, max + 1] : [min, max])
+        .range([CHART_HEIGHT - STROKE_PADDING, STROKE_PADDING]),
+  };
 });
 
 const linePath = computed(() => {
-  const line = d3.line()
-      .x(d => d.x)
-      .y(d => d.y)
-      .curve(d3.curveBasis);
-  return line(props.points);
+  if (props.points.length < 2) return '';
+  const {x, y} = scales.value;
+  return d3.line<number>()
+      .x((_, i) => x(i))
+      .y((d) => y(d))
+      .curve(d3.curveBasis)(props.points) ?? '';
 });
 
 const areaPath = computed(() => {
-  let path = linePath.value;
-
-  const lastPoint = props.points[props.points.length - 1];
-  path += ` L ${lastPoint.x},30 L 0,30 Z`;
-
-  return path;
+  if (props.points.length < 2) return '';
+  const {x, y} = scales.value;
+  return d3.area<number>()
+      .x((_, i) => x(i))
+      .y0(CHART_HEIGHT)
+      .y1((d) => y(d))
+      .curve(d3.curveBasis)(props.points) ?? '';
 });
 </script>
 
 <template>
-  <div class="card">
+  <BaseCard class="small-card">
     <CardHeader :icon="icon" :title="title"/>
     <div class="card-value">
       {{ formattedValue }}
     </div>
 
     <div class="card-chart">
-      <svg viewBox="0 0 100 30" preserveAspectRatio="none" width="100%" height="30">
-        <path :d="areaPath" :fill="props.color" opacity="0.1"/>
-        <path :d="linePath" :stroke="props.color" fill="none" stroke-width="2"/>
+      <svg
+          v-if="linePath"
+          :viewBox="`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`"
+          preserveAspectRatio="none"
+          width="100%"
+          :height="CHART_HEIGHT"
+          aria-hidden="true"
+      >
+        <path :d="areaPath" :fill="color" opacity="0.1"/>
+        <path :d="linePath" :stroke="color" fill="none" stroke-width="2"/>
       </svg>
     </div>
 
-    <div class="card-percentage" :style="{ backgroundColor: props.backgroundColor, color: props.color }">
-      <template v-if="props.trend === 'down'">
-        <ArrowTrendingDownIcon class="icon"/>
-        <span>{{ props.percentage }} this month</span>
-      </template>
-      <template v-else-if="props.trend === 'up'">
-        <ArrowTrendingUpIcon class="icon"/>
-        <span>{{ props.percentage }} this month</span>
-      </template>
-      <span v-else>confirmation rate {{ props.percentage }}</span>
-    </div>
-  </div>
+    <TrendBadge :trend="trend" :caption="caption" :color="color" :background-color="backgroundColor"/>
+  </BaseCard>
 </template>
 
-
 <style scoped>
-.card {
-  border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
+.small-card {
   align-items: flex-start;
   justify-content: space-around;
-  width: 210px;
-  height: 180px;
-  background-color: #FFFFFF;
-}
-
-.icon {
-  width: 12px;
-  height: 12px;
-  margin-right: 4px;
-}
-
-.card-value {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: 50px;
-  line-height: 61px;
-  margin-left: 5px;
-}
-
-.card-percentage {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 18px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  display: inline-block;
+  width: 260px;
+  height: 230px;
 }
 
 .card-chart {
   width: 192px;
+  max-width: 100%;
   height: 32px;
   display: flex;
   justify-content: center;

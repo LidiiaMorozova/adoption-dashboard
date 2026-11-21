@@ -1,78 +1,71 @@
-<script setup>
-import {onMounted, watch, defineProps, computed, ref, onUnmounted} from 'vue';
-import {Chart, registerables} from 'chart.js';
-import {ArrowTrendingDownIcon, ArrowTrendingUpIcon} from "@heroicons/vue/24/outline";
+<script setup lang="ts">
+import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
+import {Chart} from '@/plugins/chart';
+import BaseCard from './common/BaseCard.vue';
 import CardHeader from './common/CardHeader.vue';
-import GrayButton from "@/components/common/GrayButton.vue";
+import TrendBadge from './common/TrendBadge.vue';
+import GrayButton from './common/GrayButton.vue';
+import ColorGuideDialog from './ColorGuideDialog.vue';
+import type {MiddleCard} from '@/types/dashboard';
 
-const props = defineProps({
-  title: String,
-  value: Number,
-  trend: String,
-  percentage: String,
-  backgroundColor: String,
-  color: {
-    type: String,
-    default: 'blue'
-  },
-  icon: Object,
-  points: {
-    type: Array,
-    default: () => []
-  }
-});
+const props = defineProps<MiddleCard>();
 
-const formattedValue = computed(() => {
-  return props.value.toLocaleString();
-});
+const detailsOpen = ref(false);
 
-const generateIdFromTitle = (title) => {
-  return title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+const formattedValue = computed(() => props.value.toLocaleString());
+
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+// Kept outside Vue reactivity: Chart.js mutates its instance internally.
+let chartInstance: Chart<'doughnut'> | null = null;
+
+const toPercent = (value: number, total: number) => (total ? Math.round((value / total) * 100) : 0);
+
+const destroyChart = () => {
+  chartInstance?.destroy();
+  chartInstance = null;
 };
 
-const chartId = computed(() => generateIdFromTitle(props.title));
-
-Chart.register(...registerables);
-
-const chartInstance = ref(null);
-
 const renderChart = () => {
-  if (chartInstance.value) {
-    chartInstance.value.destroy();
-  }
+  destroyChart();
+  if (!canvasRef.value) return;
 
-  const ctx = document.getElementById(chartId.value).getContext('2d');
-  const labels = props.points.map(point => point.label);
-  const dataValues = props.points.map(point => point.value);
-  const backgroundColors = props.points.map(point => point.color);
+  const labels = props.points.map((point) => point.label);
+  const dataValues = props.points.map((point) => point.value);
+  const backgroundColors = props.points.map((point) => point.color);
+  const total = dataValues.reduce((sum, value) => sum + value, 0);
+  const legendTextColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-legend-text').trim();
 
-  chartInstance.value = new Chart(ctx, {
+  chartInstance = new Chart(canvasRef.value, {
     type: 'doughnut',
     data: {
-      labels: labels,
+      labels,
       datasets: [{
         data: dataValues,
         backgroundColor: backgroundColors,
         borderWidth: 0,
         borderRadius: 10,
         spacing: 3,
-      }]
+      }],
     },
     options: {
       cutout: '55%',
+      layout: {
+        padding: {
+          right: 20,
+        },
+      },
       plugins: {
         legend: {
           position: 'right',
           labels: {
-            generateLabels: (chart) => {
-              const data = chart.data.datasets[0].data;
-              return chart.data.labels.map((label, i) => ({
-                text: `${data[i]}% ${label}`,
-                fillStyle: chart.data.datasets[0].backgroundColor[i],
-                strokeStyle: chart.data.datasets[0].backgroundColor[i],
-                fontColor: '#4A5568',
-              }));
-            },
+            generateLabels: () => labels.map((label, i) => ({
+              text: `${toPercent(dataValues[i] ?? 0, total)}% ${label}`,
+              fillStyle: backgroundColors[i],
+              strokeStyle: backgroundColors[i],
+              fontColor: legendTextColor,
+              index: i,
+            })),
             usePointStyle: false,
             boxWidth: 20,
             padding: 20,
@@ -80,122 +73,59 @@ const renderChart = () => {
         },
         tooltip: {
           callbacks: {
-            label: function (tooltipItem) {
-              const value = tooltipItem.raw;
-              return `  ${value}%`;
-            }
+            label: (item) => `  ${item.raw} (${toPercent(Number(item.raw), total)}%)`,
           },
           bodyFont: {
-            size: 12
-          }
+            size: 12,
+          },
         },
-        layout: {
-          padding: {
-            right: 20
-          }
-        }
-      }
-    }
+      },
+    },
   });
 };
 
-onMounted(() => {
-  renderChart();
-});
+onMounted(renderChart);
 
-watch(() => props.points, () => {
-  renderChart();
-}, {deep: true});
+watch(() => props.points, renderChart, {deep: true});
 
-onUnmounted(() => {
-  if (chartInstance.value) {
-    chartInstance.value.destroy();
-  }
-});
+onUnmounted(destroyChart);
 </script>
 
 <template>
-  <div class="card">
+  <BaseCard class="middle-card">
     <CardHeader :icon="icon" :title="title"/>
     <div class="card-value">
       {{ formattedValue }}
     </div>
 
-    <div class="card-percentage" :style="{ backgroundColor: props.backgroundColor, color: props.color }">
-      <template v-if="props.trend === 'down'">
-        <ArrowTrendingDownIcon class="icon"/>
-        <span>{{ props.percentage }} this month</span>
-      </template>
-      <template v-else-if="props.trend === 'up'">
-        <ArrowTrendingUpIcon class="icon"/>
-        <span>{{ props.percentage }} this month</span>
-      </template>
-      <span v-else>confirmation rate {{ props.percentage }}</span>
-    </div>
+    <TrendBadge :trend="trend" :caption="caption" :color="color" :background-color="backgroundColor"/>
     <div class="divider"/>
 
     <div class="chart-container">
-      <canvas :id="chartId"></canvas>
+      <canvas ref="canvasRef" role="img" :aria-label="`${title} breakdown`"></canvas>
     </div>
 
     <div class="view-button">
-      <GrayButton label="View details"/>
+      <GrayButton label="View details" aria-haspopup="dialog" @click="detailsOpen = true"/>
     </div>
-  </div>
+
+    <ColorGuideDialog
+        v-model:open="detailsOpen"
+        :title="title"
+        :trend="trend"
+        :color="color"
+        :caption="caption"
+        :segments="points"
+    />
+  </BaseCard>
 </template>
 
 <style scoped>
-.card {
-  border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 24px;
-
-  display: flex;
-  flex-direction: column;
+.middle-card {
   align-items: flex-start;
   justify-content: space-around;
-
-  width: 390px;
-  height: 405px;
-  background-color: #FFFFFF;
-
-}
-
-.icon {
-  width: 12px;
-  height: 12px;
-  margin-right: 4px;
-}
-
-.card-value {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: 50px;
-  line-height: 61px;
-  margin-left: 5px;
-}
-
-.card-percentage {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 18px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  display: inline-block;
-}
-
-.divider {
-  width: 100%;
-  height: 1px;
-  background-color: #ECEFF4;
-  border-radius: 5px;
-  margin: 10px 0;
-}
-
-canvas {
-  max-width: 100%;
-  max-height: 100%;
+  width: 440px;
+  height: 455px;
 }
 
 .chart-container {
@@ -206,28 +136,12 @@ canvas {
   height: 200px;
 }
 
-.chartjs-legend li span {
-  display: inline-block;
-  width: 20px;
-  height: 8px;
-  margin-right: 10px;
-  background-color: currentColor;
-  border-radius: 10px !important;
-}
-
-.chartjs-legend li {
-  color: #4A5568;
-}
-
-.chartjs-legend li span:first-child {
-  color: #000;
-  font-weight: 700;
+canvas {
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .view-button {
-  width: 100%;
-  display: flex;
-  justify-content: center;
   margin-left: 10px;
 }
 </style>

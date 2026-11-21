@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #E6F9F6;
+  --color-brand-100: #C7F0E9;
+  --color-brand-500: #00BFA5;
+  --color-brand-700: #007A69;
+  --color-brand-800: #00594D;
+  --color-ink: #1F2933;
+  --color-muted: #5F6670;
+  --color-surface: #FFFFFF;
+  --color-page: #F3F3F3;
+}
+
+:root {
+  --color-page-bg: #F3F3F3;
+  --color-card-bg: #FFFFFF;
+  --color-card-border: #EEEEEE;
+  --color-divider: #ECEFF4;
+  --color-accent: #00BFA5;
+  --color-text-muted: #7E858E;
+  --color-legend-text: #4A5568;
+  --color-button-bg: #E8E8E8;
+  --color-button-text: #484848;
+  --color-button-active-bg: #484848;
+  --color-button-active-text: #FFFFFF;
+  --color-icon-bg: #F3F3F3;
+
+  --font-family: 'Poppins', sans-serif;
+  --radius-card: 12px;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background: var(--color-page-bg);
+}
+
+body {
+  font-family: var(--font-family);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.card-value {
+  font-weight: 600;
+  font-size: 50px;
+  line-height: 61px;
+  margin-left: 5px;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--color-divider);
+  border-radius: 5px;
+  margin: 10px 0;
+}
+
+.view-button {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}

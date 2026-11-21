@@ -1,46 +1,42 @@
 {
   "name": "adoption-dashboard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "dev:server": "npm --prefix server run start:dev",
+    "build": "vue-tsc --build && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --build",
+    "lint": "eslint .",
+    "test:e2e": "playwright test",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
-    "@heroicons/vue": "^2.1.5",
-    "chart.js": "^4.4.4",
-    "core-js": "^3.8.3",
+    "@heroicons/vue": "^2.2.0",
+    "chart.js": "^4.6.1",
     "d3": "^7.9.0",
-    "vue": "^3.2.13"
+    "pinia": "^3.0.4",
+    "vue": "^3.5.22"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.16",
-    "@babel/eslint-parser": "^7.12.16",
-    "@vue/cli-plugin-babel": "~5.0.0",
-    "@vue/cli-plugin-eslint": "~5.0.0",
-    "@vue/cli-service": "~5.0.0",
-    "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^8.0.3"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/vue3-essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "@babel/eslint-parser"
-    },
-    "rules": {}
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead",
-    "not ie 11"
-  ]
+    "@playwright/test": "1.56.1",
+    "@tailwindcss/vite": "4.1.18",
+    "@tsconfig/node22": "^22.0.2",
+    "@types/d3": "^7.4.3",
+    "@types/node": "^22.18.0",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vue/eslint-config-typescript": "^14.6.0",
+    "@vue/tsconfig": "^0.7.0",
+    "eslint": "^9.36.0",
+    "eslint-plugin-vue": "^9.33.0",
+    "tailwindcss": "4.1.18",
+    "typescript": "~5.8.3",
+    "vite": "^6.4.1",
+    "vue-tsc": "^2.2.12"
+  }
 }
