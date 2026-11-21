@@ -2,6 +2,8 @@
 
 Adoption dashboard for the BeWell web app, with a patient overview, symptom check-ins and appointment booking.
 
+**[▶ Open the live demo](https://lidiiamorozova.github.io/adoption-dashboard/)**: runs in the browser without the API, so bookings and check-ins are saved only on your device. See [Demo on GitHub Pages](#demo-on-github-pages).
+
 - **Me** (opens first): a greeting, a face that shows how you feel today (smiling for a feeling rating of 4–5, neutral for 3, sad for 1–2, a question mark before today's check-in), and charts of temperature and of feeling, appetite and sleep, one point per day.
 - **Adoption dashboard**: usage KPIs (logins, questionnaires, measurements, care paths, services) loaded from the API. **View details** opens a dialog that explains the colors of the card's ring chart (each part with its count and share) and of the trend badges.
 - **Book appointment**: patients pick a day and a free time slot, enter their details and get a confirmation. If someone else books the same slot first, the app says so, refreshes the times and keeps what the patient typed.
@@ -21,8 +23,6 @@ Adoption dashboard for the BeWell web app, with a patient overview, symptom chec
 <img src="docs/screenshots/booking-mobile.png" alt="Appointment booking on a phone" width="320">
 
 </details>
-
-**Demo:** https://lidiiamorozova.github.io/adoption-dashboard/ (a static GitHub Pages build that runs without the API: bookings and check-ins are saved only in your browser; see [Demo on GitHub Pages](#demo-on-github-pages)).
 
 ## Tech stack and tools
 
