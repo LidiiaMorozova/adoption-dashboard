@@ -18,7 +18,7 @@ async function resetData() {
       <InformationCircleIcon class="mt-0.5 size-5 shrink-0" aria-hidden="true"/>
       <span>
         <strong class="font-semibold">Demo version.</strong>
-        Bookings and check-ins are saved only in this browser. Open the booking page in two tabs to try booking the same time twice.
+        Bookings and check-ins are saved only in this browser.
       </span>
     </p>
     <button

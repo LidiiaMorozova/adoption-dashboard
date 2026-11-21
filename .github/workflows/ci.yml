@@ -46,7 +46,8 @@ jobs:
 
   e2e:
     name: End-to-end · Playwright
-    runs-on: ubuntu-latest
+    # Playwright 1.56 supports Ubuntu up to 24.04; ubuntu-latest moved past it.
+    runs-on: ubuntu-24.04
     needs: [web, api]
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +72,8 @@ jobs:
 
   e2e-demo:
     name: End-to-end · GitHub Pages demo
-    runs-on: ubuntu-latest
+    # Playwright 1.56 supports Ubuntu up to 24.04; ubuntu-latest moved past it.
+    runs-on: ubuntu-24.04
     needs: [web]
     steps:
       - uses: actions/checkout@v4
