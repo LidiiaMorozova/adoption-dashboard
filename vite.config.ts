@@ -5,11 +5,15 @@ import tailwindcss from '@tailwindcss/vite';
 
 const apiTarget = process.env.API_PROXY_TARGET ?? 'http://localhost:3000';
 
-export default defineConfig({
+export default defineConfig(({mode}) => ({
+  // GitHub Pages serves the demo from /<repository>/; BASE_PATH overrides it for forks.
+  base: process.env.BASE_PATH ?? (mode === 'demo' ? '/adoption-dashboard/' : '/'),
   plugins: [vue(), tailwindcss()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // The demo build reuses the API's framework-free rules and sample data.
+      '@server': fileURLToPath(new URL('./server/src', import.meta.url)),
     },
   },
   server: {
@@ -29,4 +33,4 @@ export default defineConfig({
       '/api': apiTarget,
     },
   },
-});
+}));

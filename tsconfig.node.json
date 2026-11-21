@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
-  "include": ["vite.config.ts", "playwright.config.ts", "e2e/**/*"],
+  "include": ["vite.config.ts", "playwright.config.ts", "playwright.demo.config.ts", "e2e/**/*", "e2e-demo/**/*"],
   "compilerOptions": {
     "composite": true,
     "noEmit": true,

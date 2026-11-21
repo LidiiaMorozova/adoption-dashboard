@@ -10,10 +10,13 @@
     "dev": "vite",
     "dev:server": "npm --prefix server run start:dev",
     "build": "vue-tsc --build && vite build",
+    "build:demo": "vue-tsc --build && vite build --mode demo",
     "preview": "vite preview",
+    "preview:demo": "vite preview --mode demo --port 4173",
     "typecheck": "vue-tsc --build",
     "lint": "eslint .",
     "test:e2e": "playwright test",
+    "test:e2e:demo": "playwright test --config playwright.demo.config.ts",
     "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {

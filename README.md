@@ -22,7 +22,7 @@ Adoption dashboard for the BeWell web app, with a patient overview, symptom chec
 
 </details>
 
-**Demo:** not deployed yet. See [Deployment](#deployment).
+**Demo:** https://lidiiamorozova.github.io/adoption-dashboard/ (a static GitHub Pages build that runs without the API: bookings and check-ins are saved only in your browser; see [Demo on GitHub Pages](#demo-on-github-pages)).
 
 ## Tech stack and tools
 
@@ -69,7 +69,7 @@ There is no router library: the active tab lives in the URL hash (`#me`, `#appoi
 | [Jest](https://jestjs.io) + ts-jest | Unit tests of the API services |
 | [Supertest](https://github.com/ladjs/supertest) | HTTP tests of the API routes, status codes and validation |
 | [Playwright](https://playwright.dev) 1.56 | End-to-end tests in Chromium on a desktop and a Pixel 7 viewport, including keyboard use and the double-booking case |
-| [GitHub Actions](https://docs.github.com/actions) | Runs lint, type checks, API tests, builds and Playwright on every push to `main` and every pull request (`.github/workflows/ci.yml`) |
+| [GitHub Actions](https://docs.github.com/actions) | `ci.yml` runs lint, type checks, API tests, builds and both Playwright suites on every push to `main` and every pull request; `pages.yml` deploys the demo to GitHub Pages from `main` |
 
 ### Where data is stored
 
@@ -81,7 +81,7 @@ There is no router library: the active tab lives in the URL hash (`#me`, `#appoi
 | Selected day, slot, form input | Pinia stores in the browser tab | Until the page is reloaded |
 | Active tab | URL hash | As long as the URL |
 
-Nothing is written to a database, to files, to cookies or to `localStorage`. In watch mode the API restarts whenever a file in `server/src` changes, which also clears the data.
+With the API, nothing is written to a database, to files, to cookies or to `localStorage`. In the GitHub Pages demo there is no API, and bookings and check-ins are kept in the visitor's `localStorage` instead (see below). In watch mode the API restarts whenever a file in `server/src` changes, which also clears the data.
 
 ## Getting started
 
@@ -112,6 +112,9 @@ Vite proxies `/api` to the API, so open http://localhost:8080 and go to the **Bo
 | `npm run build` | Type-checks and builds the web app into `dist/` |
 | `npm run lint` | ESLint for the web app |
 | `npm run test:e2e` | Playwright tests; starts both servers itself when they are not running |
+| `npm run build:demo` | Builds the GitHub Pages demo into `dist/` (no API needed, served from `/adoption-dashboard/`) |
+| `npm run preview:demo` | Serves that build on http://localhost:4173/adoption-dashboard/ |
+| `npm run test:e2e:demo` | Playwright tests of the demo build |
 | `npm --prefix server test` | API unit and HTTP tests |
 | `npm run screenshots` | Refreshes the README screenshots (needs both servers running) |
 
@@ -161,13 +164,14 @@ Errors use Nest's JSON shape plus a `code`:
 - **The color guide is a native `<dialog>`.** It keeps focus inside while open, closes with Escape, a click outside or **Got it**, and returns focus to the **View details** button.
 - **Charts follow one rule set.** Temperature and the 1–5 ratings are separate charts rather than one chart with two y-axes. Each point is the latest check-in of a day, lines are straight because nothing was measured between check-ins, and the three rating series use a fixed palette checked for color-vision deficiencies, with different marker shapes and a legend. Every chart has a tooltip and a "Show as table" view.
 - **Calendar dates as strings.** Days are `YYYY-MM-DD` strings computed in the clinic's time zone and formatted in UTC in the browser, so the visitor's time zone never shifts a day.
+- **One code base for the app and the demo.** The demo build swaps the HTTP calls for `src/api/demo.ts`, which answers the same routes with the same status codes in the browser. It imports the API's framework-free modules (`schedule.ts`, `calendar.ts`, `covid.rules.ts`, `dashboard.data.ts`) rather than copying them, so the calendar, sample data and limits are the same in both. The regular build never loads this code.
 - **Vite instead of Vue CLI.** Vue CLI is in maintenance mode; Vite starts faster and supports TypeScript and Tailwind 4 natively.
 
 ## Project structure
 
 ```
 src/
-  api/            fetch wrapper (ApiError) and typed endpoints
+  api/            fetch wrapper (ApiError), typed endpoints, demo.ts (in-browser API for the demo)
   stores/         Pinia stores: dashboard, booking, symptoms
   pages/          MainOverview, AdoptionDashboard, AppointmentBooking, CovidMonitoring
   components/     dashboard cards, main/ (MoodFace), charts/ (LineChart), booking/, covid/, common/
@@ -176,13 +180,31 @@ server/src/
   dashboard/      GET /api/dashboard
   appointments/   days, slots and bookings (service, controller, DTOs)
   covid/          symptom check-ins
-e2e/              Playwright tests
-.github/workflows CI pipeline
+e2e/              Playwright tests against the API
+e2e-demo/         Playwright tests of the GitHub Pages demo
+.github/workflows ci.yml (checks) and pages.yml (demo deployment)
 ```
 
 ## Deployment
 
-Not set up yet. The web app is a static `dist/` build; the API is a Node process (`npm --prefix server run build && npm --prefix server start`). To host them on different origins, build the web app with `VITE_API_URL=https://<api-host>/api` and start the API with `CORS_ORIGIN=https://<web-host>`.
+### Demo on GitHub Pages
+
+`.github/workflows/pages.yml` builds the demo (`npm run build:demo`) and publishes it on every push to `main`, or when started by hand from the Actions tab.
+
+One-time setup in the repository settings:
+
+1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+2. On GitHub Free, Pages needs a **public** repository. Paid plans (Pro, Team, Enterprise) can publish from a private one, but the site itself is public either way.
+
+How the demo differs from the full app:
+
+- There is no API. `src/api/demo.ts` answers requests in the browser and stores bookings and check-ins in `localStorage`, so each visitor sees only their own data.
+- Opening the booking page in two tabs of the same browser shows the "already booked" case.
+- A banner explains this and has a **Reset demo data** button.
+
+### Full app
+
+The web app is a static `dist/` build; the API is a Node process (`npm --prefix server run build && npm --prefix server start`). To host them on different origins, build the web app with `VITE_API_URL=https://<api-host>/api` and start the API with `CORS_ORIGIN=https://<web-host>`.
 
 ## Known limitations
 

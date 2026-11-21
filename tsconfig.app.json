@@ -1,12 +1,24 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+  "include": [
+    "env.d.ts",
+    "src/**/*",
+    "src/**/*.vue",
+    "server/src/appointments/appointments.types.ts",
+    "server/src/appointments/calendar.ts",
+    "server/src/appointments/schedule.ts",
+    "server/src/covid/covid.rules.ts",
+    "server/src/covid/covid.types.ts",
+    "server/src/dashboard/dashboard.data.ts",
+    "server/src/dashboard/dashboard.types.ts"
+  ],
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@server/*": ["./server/src/*"]
     }
   }
 }

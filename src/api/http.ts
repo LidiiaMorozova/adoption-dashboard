@@ -1,5 +1,8 @@
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '');
 
+/** True in the static demo build, where requests are answered in the browser instead of by the API. */
+export const IS_DEMO = import.meta.env.VITE_DEMO === 'true';
+
 export class ApiError extends Error {
   constructor(
     /** HTTP status, or 0 when the server could not be reached. */
@@ -18,7 +21,22 @@ interface ErrorBody {
   message?: string | string[];
 }
 
+function toApiError(status: number, body: ErrorBody | null): ApiError {
+  const message = Array.isArray(body?.message)
+    ? body.message.join('. ')
+    : body?.message ?? `Request failed with status ${status}.`;
+  return new ApiError(status, body?.code, message);
+}
+
 export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  if (IS_DEMO) {
+    // Loaded on demand, so the regular build does not include the demo code.
+    const {demoRequest} = await import('./demo');
+    const result = await demoRequest(init.method ?? 'GET', path, init.body ? JSON.parse(String(init.body)) : undefined);
+    if (result.status >= 400) throw toApiError(result.status, result.body as ErrorBody);
+    return result.body as T;
+  }
+
   let response: Response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {
@@ -34,11 +52,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   }
 
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as ErrorBody | null;
-    const message = Array.isArray(body?.message)
-      ? body.message.join('. ')
-      : body?.message ?? `Request failed with status ${response.status}.`;
-    throw new ApiError(response.status, body?.code, message);
+    throw toApiError(response.status, (await response.json().catch(() => null)) as ErrorBody | null);
   }
 
   return (await response.json()) as T;

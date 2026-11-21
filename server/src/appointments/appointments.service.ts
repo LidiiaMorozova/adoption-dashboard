@@ -1,21 +1,12 @@
 import {ConflictException, Inject, Injectable, NotFoundException} from '@nestjs/common';
 import {randomUUID} from 'node:crypto';
-import {addDays, addMinutes, dateInTimeZone, isWeekend} from './calendar';
 import {Booking, DaySummary, ErrorCode, Slot} from './appointments.types';
+import {bookingWindow, scheduleForDay} from './schedule';
 import {CLOCK, type Clock} from '../clock';
 
 export const CLINIC_TIME_ZONE = Symbol('CLINIC_TIME_ZONE');
+export {BOOKING_WINDOW_DAYS} from './schedule';
 
-/** Number of bookable days, starting tomorrow. */
-export const BOOKING_WINDOW_DAYS = 14;
-export const SLOT_MINUTES = 30;
-/** Weekday opening hours, with a lunch break from 12:00 to 13:00. */
-const SLOT_STARTS = [
-  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-  '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
-];
-/** Share of slots that start out taken, so the demo calendar looks lived-in. */
-const SEED_TAKEN_PERCENT = 30;
 const SEED_BOOKING = 'seed';
 
 interface SlotRecord {
@@ -31,16 +22,6 @@ export interface CreateBookingInput {
   patientName: string;
   email: string;
   reason?: string;
-}
-
-/** FNV-1a; gives every slot a stable pseudo-random seed state. */
-function hash(value: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < value.length; i++) {
-    h ^= value.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
 }
 
 /**
@@ -72,13 +53,11 @@ export class AppointmentsService {
 
   /** Slots of one day; dates outside the booking window have none. */
   listSlots(date: string): Slot[] {
-    if (!this.windowDates().includes(date)) return [];
     return [...this.slotsFor(date).values()].map(toSlot);
   }
 
   book(input: CreateBookingInput): Booking {
-    const date = input.slotId.slice(0, 10);
-    const slot = this.windowDates().includes(date) ? this.slotsFor(date).get(input.slotId) : undefined;
+    const slot = this.slotsFor(input.slotId.slice(0, 10)).get(input.slotId);
     if (!slot) {
       throw new NotFoundException({
         statusCode: 404,
@@ -123,33 +102,23 @@ export class AppointmentsService {
   }
 
   private windowDates(): string[] {
-    const today = dateInTimeZone(this.clock(), this.timeZone);
-    return Array.from({length: BOOKING_WINDOW_DAYS}, (_, i) => addDays(today, i + 1));
+    return bookingWindow(this.clock(), this.timeZone);
   }
 
-  /** The second working day of the window is fully booked, to show the "no free slots" state. */
-  private fullyBookedDate(): string | undefined {
-    return this.windowDates().filter((date) => !isWeekend(date))[1];
-  }
-
+  /** The day's slots, created from the schedule on first use; empty outside the booking window. */
   private slotsFor(date: string): Map<string, SlotRecord> {
+    const window = this.windowDates();
+    if (!window.includes(date)) return new Map();
+
     let slots = this.days.get(date);
     if (!slots) {
-      slots = new Map();
-      if (!isWeekend(date)) {
-        const fullyBooked = date === this.fullyBookedDate();
-        for (const start of SLOT_STARTS) {
-          const id = `${date}T${start}`;
-          const taken = fullyBooked || hash(id) % 100 < SEED_TAKEN_PERCENT;
-          slots.set(id, {
-            id,
-            date,
-            start,
-            end: addMinutes(start, SLOT_MINUTES),
-            bookingId: taken ? SEED_BOOKING : null,
-          });
-        }
-      }
+      slots = new Map(scheduleForDay(date, window).map((slot) => [slot.id, {
+        id: slot.id,
+        date: slot.date,
+        start: slot.start,
+        end: slot.end,
+        bookingId: slot.takenAtStart ? SEED_BOOKING : null,
+      }]));
       this.days.set(date, slots);
     }
     return slots;

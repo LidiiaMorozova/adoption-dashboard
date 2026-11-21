@@ -1,9 +1,7 @@
 import {Transform} from 'class-transformer';
 import {IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min} from 'class-validator';
 import type {Rating} from './covid.types';
-
-export const MIN_TEMPERATURE = 34;
-export const MAX_TEMPERATURE = 43;
+import {MAX_TEMPERATURE, MIN_TEMPERATURE} from './covid.rules';
 
 const trim = ({value}: {value: unknown}) => (typeof value === 'string' ? value.trim() : value);
 

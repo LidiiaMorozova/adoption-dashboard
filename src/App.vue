@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {computed} from 'vue';
 import TabNav from '@/components/TabNav.vue';
+import DemoBanner from '@/components/DemoBanner.vue';
+import {IS_DEMO} from '@/api/http';
 import PlaceholderPanel from '@/components/PlaceholderPanel.vue';
 import AdoptionDashboard from '@/pages/AdoptionDashboard.vue';
 import AppointmentBooking from '@/pages/AppointmentBooking.vue';
@@ -16,6 +18,7 @@ const activeLabel = computed(() => TABS.find((tab) => tab.id === activeTab.value
   <div class="w-full max-w-[1390px] min-w-0 px-4 py-5 md:px-5">
     <header class="mb-5">
       <h1 class="sr-only">BeWell Adoption Dashboard</h1>
+      <DemoBanner v-if="IS_DEMO"/>
       <TabNav :tabs="TABS" :model-value="activeTab" @update:model-value="setActiveTab"/>
     </header>
 

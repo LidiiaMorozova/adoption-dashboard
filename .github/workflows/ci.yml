@@ -68,3 +68,23 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  e2e-demo:
+    name: End-to-end · GitHub Pages demo
+    runs-on: ubuntu-latest
+    needs: [web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e:demo
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-demo
+          path: playwright-report-demo/
+          retention-days: 7

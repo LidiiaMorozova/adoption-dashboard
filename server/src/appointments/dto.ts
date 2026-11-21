@@ -2,6 +2,7 @@ import {Transform} from 'class-transformer';
 import {IsEmail, IsNotEmpty, IsOptional, IsString, Length, Matches, MaxLength, Validate} from 'class-validator';
 import {ValidatorConstraint, ValidatorConstraintInterface} from 'class-validator';
 import {isIsoDate} from './calendar';
+import {SLOT_ID_PATTERN} from './schedule';
 
 const trim = ({value}: {value: unknown}) => (typeof value === 'string' ? value.trim() : value);
 
@@ -24,7 +25,7 @@ export class ListSlotsQuery {
 
 export class CreateBookingDto {
   @IsString()
-  @Matches(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, {message: 'slotId must look like YYYY-MM-DDTHH:mm'})
+  @Matches(SLOT_ID_PATTERN, {message: 'slotId must look like YYYY-MM-DDTHH:mm'})
   slotId: string;
 
   @Transform(trim)
